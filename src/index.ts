@@ -8,7 +8,7 @@ export const influxClient = new InfluxDB({ url: `${process.env.INFLUX_URL}`, tok
 export const writeAPI = influxClient.getWriteApi("pocket", "rpcBenchmark")
 
 
-const PAUSE = 1000 // milliseconds
+const PAUSE = 2000 // milliseconds
 
 async function main() {
   benchmark('Pocket Network', 'eth_blockNumber', process.env.POCKET_URL)
@@ -46,16 +46,18 @@ async function benchmark(provider: string, method: string, requestURL: string | 
   const json = await body.json()
   console.log(statusCode, json)
 
-  const elapsedTime = BigInt(Math.round(Number(end - start) / 1000000))
-  console.log(`${provider} ${method} ${elapsedTime} ms`)
+  if (statusCode === 200) {
+    const elapsedTime = BigInt(Math.round(Number(end - start) / 1000000))
+    console.log(`${provider} ${method} ${elapsedTime} ms`)
 
-  const point = new Point('relay')
-    .tag('provider', provider)
-    .tag('method', method)
-    .intField('elapsedTime', elapsedTime)
-    .timestamp(new Date())
+    const point = new Point('relay')
+      .tag('provider', provider)
+      .tag('method', method)
+      .intField('elapsedTime', elapsedTime)
+      .timestamp(new Date())
 
-  writeAPI.writePoint(point)
+    writeAPI.writePoint(point)
+  }
 }
 
-setTimeout(main, 1000)
+setTimeout(main, PAUSE)
